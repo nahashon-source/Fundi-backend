@@ -37,10 +37,6 @@ app.add_middleware(
 )
 
 
-# --- Centralized exception handlers ---
-# Each maps a custom exception to the correct HTTP status, while keeping
-# the {success, message, errors} envelope consistent across every error.
-
 @app.exception_handler(NotFoundException)
 async def not_found_handler(request: Request, exc: NotFoundException) -> JSONResponse:
     return JSONResponse(status_code=404, content={"success": False, "message": exc.message, "errors": None})
@@ -71,8 +67,9 @@ def health_check() -> dict:
     """Basic liveness check - confirms the API process is up and responding."""
     return {"success": True, "message": "FundiHub API is running", "data": None}
 
-app.include_router(invoices_router, prefix="/invoices", tags=["invoices"])
-app.include_router(jobs_router, prefix="/jobs", tags=["jobs"])
-app.include_router(categories_router, prefix="/categories", tags=["categories"])
-app.include_router(fundis_router, prefix="/fundis", tags=["fundis"])
+
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(fundis_router, prefix="/fundis", tags=["fundis"])
+app.include_router(categories_router, prefix="/categories", tags=["categories"])
+app.include_router(jobs_router, prefix="/jobs", tags=["jobs"])
+app.include_router(invoices_router, prefix="/invoices", tags=["invoices"])

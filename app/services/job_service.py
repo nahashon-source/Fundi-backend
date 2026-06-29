@@ -141,3 +141,36 @@ class JobService:
         from app.services.invoice_service import InvoiceService
         invoice = InvoiceService(self.repo.db).generate_for_job(job)
         return job, invoice
+    
+    def mark_done_by_fundi(self, job_id: int, fundi_profile_id: int):
+        """Fundi signals work is finished. Doesn't complete the job alone --
+        waits on customer confirmation before status changes or an invoice is made."""
+        job = self.get_job(job_id)
+        if job.fundi_id != fundi_profile_id:
+            raise ForbiddenException("You are not assigned to this job.")
+        return self.repo.update(job, fundi_marked_done=True)
+
+    def confirm_completion_by_customer(self, job_id: int, customer_profile_id: int):
+        """
+        Customer confirms the job is genuinely done. This is the single
+        trigger point for: job -> completed, invoice generated, fundi's
+        completed_jobs counter incremented.
+        """
+        job = self.get_job(job_id)
+        if job.customer_id != customer_profile_id:
+            raise ForbiddenException("You can only confirm your own jobs.")
+        if not job.fundi_marked_done:
+            raise ValidationException("Fundi has not marked this job as done yet.")
+
+        job = self.repo.update(job, status=JobStatus.COMPLETED)
+
+        # Increment the fundi's completed_jobs counter -- small but real
+        # business effect of completion, used by FundiOut/profile display.
+        from app.repositories.fundi_repository import FundiRepository
+        fundi_repo = FundiRepository(self.repo.db)
+        fundi = fundi_repo.get_by_id(job.fundi_id)
+        fundi_repo.update(fundi, completed_jobs=fundi.completed_jobs + 1)
+
+        from app.services.invoice_service import InvoiceService
+        invoice = InvoiceService(self.repo.db).generate_for_job(job)
+        return job, invoice

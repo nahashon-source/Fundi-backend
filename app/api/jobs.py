@@ -125,3 +125,27 @@ def confirm_completion(
         "message": "Job completed and invoice generated.",
         "data": {"job": JobOut.model_validate(job).model_dump(), "invoice": InvoiceOut.model_validate(invoice).model_dump()},
     }
+    
+@router.post("/{job_id}/mark-done")
+def mark_done(
+    job_id: int,
+    fundi: FundiProfile = Depends(get_current_fundi_profile),
+    db: Session = Depends(get_db),
+) -> dict:
+    job = JobService(db).mark_done_by_fundi(job_id, fundi.id)
+    return {"success": True, "message": "Marked as done. Awaiting customer confirmation.", "data": JobOut.model_validate(job).model_dump()}
+
+
+@router.post("/{job_id}/confirm-completion")
+def confirm_completion(
+    job_id: int,
+    customer: CustomerProfile = Depends(get_current_customer_profile),
+    db: Session = Depends(get_db),
+) -> dict:
+    job, invoice = JobService(db).confirm_completion_by_customer(job_id, customer.id)
+    from app.schemas.invoice import InvoiceOut
+    return {
+        "success": True,
+        "message": "Job completed and invoice generated.",
+        "data": {"job": JobOut.model_validate(job).model_dump(), "invoice": InvoiceOut.model_validate(invoice).model_dump()},
+    }

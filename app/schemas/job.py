@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.models.job import JobStatus
 
+from app.models.invoice import InvoiceStatus
 
 class JobCreateRequest(BaseModel):
     category_id: int
@@ -55,6 +56,32 @@ class JobAssignmentOut(BaseModel):
 
 class AssignmentDecisionRequest(BaseModel):
     accepted: bool
+    
+class MarkDoneResponse(BaseModel):
+    id: int
+    fundi_marked_done: bool
+
+    class Config:
+        from_attributes = True
+        
+class InvoiceOut(BaseModel):
+    id: int
+    job_id: int
+    customer_id: int
+    fundi_id: int
+    amount: float
+    commission_rate: float
+    commission_amount: float
+    fundi_earnings: float
+    status: InvoiceStatus
+    invoice_number: str
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceStatusUpdateRequest(BaseModel):
+    status: InvoiceStatus
     
 class MarkDoneResponse(BaseModel):
     id: int
