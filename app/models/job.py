@@ -5,7 +5,7 @@ JobAssignment, Invoice, and Review all hang off of.
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
@@ -30,10 +30,11 @@ class Job(Base):
     budget = Column(Float, nullable=False)
     status = Column(Enum(JobStatus), default=JobStatus.PENDING, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    fundi_id = Column(Integer, ForeignKey("fundi_profiles.id"), nullable=True)
+    fundi_marked_done = Column(Boolean, default=False, nullable=False)
 
     customer = relationship("CustomerProfile", back_populates="jobs")
     category = relationship("Category", back_populates="jobs")
     assignments = relationship("JobAssignment", back_populates="job")
     invoice = relationship("Invoice", back_populates="job", uselist=False)
     review = relationship("Review", back_populates="job", uselist=False)
-    fundi_id = Column(Integer, ForeignKey("fundi_profiles.id"), nullable=True)
